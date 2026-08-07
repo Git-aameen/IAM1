@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "https://localhost:62170",
+"RedirectUrl": "",
+"LaunchCommand": "npm run dev",
+"WorkingDirectory": "C:\\Git-ameen\\IAM1\\IAM1.Server\\..\\iam1.client",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}
