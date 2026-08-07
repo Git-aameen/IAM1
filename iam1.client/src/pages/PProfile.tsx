@@ -48,7 +48,7 @@ export function PProfile() {
 
     // Profile Form Data State
     const [formData, setFormData] = useState({
-        fullName: 'Johnathan Edward Smith',
+        fullName: 'Monkey D Luffy',
         employeeId: 'EMP-2024-0089',
         gender: 'Male',
         dateOfBirth: '14 May 1992',
