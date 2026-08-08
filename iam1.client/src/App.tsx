@@ -1,131 +1,109 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function App() {
     const navigate = useNavigate();
 
-    // สไตล์ CSS แบบ Object สำหรับใช้ใน React
-    const styles = {
-        container: {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#003787',
-        },
-        loginBox: {
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            width: '100%',
-            maxWidth: '350px',
-            textAlign: 'center',
-        },
-        title: {
-            marginBottom: '20px',
-            color: '#333',
-        },
-        formGroup: {
-            marginBottom: '15px',
-            textAlign: 'left',
-        },
-        label: {
-            display: 'block',
-            marginBottom: '5px',
-            color: '#666',
-        },
-        input: {
-            width: '100%',
-            padding: '10px',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            boxSizing: 'border-box', // สำคัญ: เพื่อให้ padding ไม่ทำให้ input กว้างเกิน box
-        },
-        forgetPassword: {
-            textAlign: 'right',
-            marginBottom: '15px',
-        },
-        link: {
-            color: '#003787',
-            textDecoration: 'none',
-            fontSize: '0.8rem',
-        },
-        loginButton: {
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#003787',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-        },
-        divider: {
-            display: 'flex',
-            alignItems: 'center',
-            margin: '20px 0',
-        },
-        dividerLine: {
-            flex: 1,
-            height: '1px',
-            backgroundColor: '#ccc',
-        },
-        dividerText: {
-            margin: '0 10px',
-            color: '#888',
-            fontSize: '0.9rem',
-        },
-        ssoButton: {
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#003787',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-        },
-    } as const;
+    const [employeeId, setEmployeeId] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const loginWithEmployeeId = async (id: string) => {
+
+        const trimmedId = id.trim();
+        if (!trimmedId) {
+            setError('Please input Employee ID');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+            // นำ employeeId ที่กรอกไปค้นหาใน database ผ่าน API
+            const response = await fetch(`/api/profile/${encodeURIComponent(trimmedId)}`);
+
+            if (response.ok) {
+                // เก็บ employeeId ไว้ใช้ตอนโหลดหน้า Profile
+                sessionStorage.setItem('iam1_employeeId', trimmedId);
+                navigate('/overview');
+            } else if (response.status === 404) {
+                setError('Can not find EmployeeID');
+            } else {
+                setError(`Failed (status: ${response.status})`);
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Fail to connect server');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (employeeId === 'administrator') {
+            setError('not allow to login by administrator on this module');
+            return;
+        } else {
+            loginWithEmployeeId(employeeId);
+        }
+    };
+    // SSO Login: ยังไม่ต่อระบบ SSO จริง จึงล็อกอินด้วย employeeId = "administrator" เสมอ
+    const handleSsoLogin = () => {
+        loginWithEmployeeId('administrator');
+    };
 
     return (
-        <div style={styles.container}>
-            <div style={styles.loginBox}>
-                <h2 style={styles.title}>Sign In</h2>
+        <div className="login-container">
+            <div className="login-box">
+                <h2 className="login-title">Sign In</h2>
 
-                <form>
+                <form onSubmit={handleLogin}>
                     {/* User ID */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>User ID</label>
-                        <input type="text" placeholder="xxxx000x" style={styles.input} />
+                    <div className="login-form-group">
+                        <label className="login-label">Employee ID</label>
+                        <input
+                            type="text"
+                            placeholder="xxxx000x"
+                            className="login-input"
+                            value={employeeId}
+                            onChange={(e) => setEmployeeId(e.target.value)}
+                        />
                     </div>
 
-                    {/* Password */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>Password</label>
-                        <input type="password" placeholder="********" style={styles.input} />
+                    {/* Password (ยังไม่ใช้งานตอนนี้) */}
+                    <div className="login-form-group">
+                        <label className="login-label">Password</label>
+                        <input type="password" placeholder="********" className="login-input" />
                     </div>
 
                     {/* Forget Password */}
-                    <div style={styles.forgetPassword}>
-                        <a href="#" style={styles.link}>Forget Password ?</a>
+                    <div className="login-forget-password">
+                        <a href="#" className="login-link">Forget Password ?</a>
                     </div>
 
+                    {/* Error message */}
+                    {error && <p className="login-error">{error}</p>}
+
                     {/* Login Button */}
-                    <button type="submit" style={styles.loginButton}>Login</button>
+                    <button type="submit" className="login-button" disabled={isLoading}>
+                        {isLoading ? 'Loading...' : 'Login'}
+                    </button>
                 </form>
 
                 {/* -----OR------ */}
-                <div style={styles.divider}>
-                    <div style={styles.dividerLine}></div>
-                    <div style={styles.dividerText}>OR</div>
-                    <div style={styles.dividerLine}></div>
+                <div className="login-divider">
+                    <div className="login-divider-line"></div>
+                    <div className="login-divider-text">OR</div>
+                    <div className="login-divider-line"></div>
                 </div>
 
-                {/* SSO Login Button */}
-                <button type="button" style={styles.ssoButton} onClick={() => navigate('/Overview')}>SSO Login</button>
+                {/* SSO Login Button (ยังไม่ทำงานจริง) */}
+                <button type="button" className="login-sso-button" onClick={handleSsoLogin} disabled={isLoading}>
+                    {isLoading ? 'Loading...' : 'SSO Login'}
+                </button>
             </div>
         </div>
     );
