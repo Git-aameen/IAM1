@@ -1,0 +1,134 @@
+.employee-container {
+    padding: 24px;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+    .page-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+.employee-count {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 9999px;
+}
+
+/* Table Card Container */
+.table-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+    .col-no {
+        width: 60px;
+        text-align: center !important;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .modern-table th {
+        background-color: #f1f5f9;
+        color: #475569;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modern-table td {
+        padding: 16px 20px;
+        color: #334155;
+        font-size: 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: #f8fafc;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .emp-id-link {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font-family: inherit;
+        font-size: inherit;
+        font-family: monospace;
+        font-weight: 600;
+        color: #2563eb;
+        cursor: pointer;
+        text-decoration: none;
+        transition: color 0.15s ease, text-decoration 0.15s ease;
+    }
+
+    .emp-id-link:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+
+/* Cell Specific Styles */
+.emp-id-cell {
+    font-family: monospace;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.emp-name-cell {
+    font-weight: 500;
+    color: #0f172a;
+}
+
+.position-badge {
+    display: inline-block;
+    background-color: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.loading, .error {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.error {
+    color: #ef4444;
+}

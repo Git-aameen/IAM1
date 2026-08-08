@@ -11,8 +11,8 @@ import PProfile from './pages/PProfile';
 import PCredential from './pages/PCredential';
 
 // import page employee
-import PEmployee_all from './pages/PEmployee_all';
-import PEmployee_add from './pages/PEmployee_add';
+import PEmployeeAll from './pages/PEmployeeAll';
+import PEmployeeAdd from './pages/PEmployeeAdd';
 
 const rootElement = document.getElementById('root');
 
@@ -31,8 +31,8 @@ if (rootElement) {
                     <Route path="/credential" element={<PCredential />} />
 
                     {/* Routes Employee*/}
-                    <Route path="/employee/all" element={<PEmployee_all/>} />
-                    <Route path="/employee/add" element={<PEmployee_add />} />
+                    <Route path="/employee/all" element={<PEmployeeAll/>} />
+                    <Route path="/employee/add" element={<PEmployeeAdd />} />
 
                     <Route path="/role/all" element={<h2>All Role Page</h2>} />
                     <Route path="/role/add" element={<h2>Add New Role Page</h2>} />

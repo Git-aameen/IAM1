@@ -30,9 +30,11 @@ namespace IAM1.Server.Data
                 OfficeLocation = "Headquarter, Floor 12, Tech Tower",
                 Department = "Information Technology",
                 Position = "Senior System Administrator",
-                Manager = "Sarah Jenkins (IT Director)",
+                ManagerID = "Sarah Jenkins (IT Director)",
+                ManagerEmail = "Sarah.Jenkins@company.com",
                 JoinedDate = new DateTime(2021, 1, 15),
-                EmploymentStatus = "Full-Time Permanent"
+                EmployeeStatus = "Active",
+                EmployeeType = "Permanent"
             });
         }
     }

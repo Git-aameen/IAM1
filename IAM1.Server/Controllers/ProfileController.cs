@@ -47,7 +47,7 @@ namespace IAM1.Server.Controllers
                 return NotFound(new { message = $"Cannot find Employee ID: {employeeId}" });
             }
 
-            // field allow to update
+            // Only update editable fields (EmployeeId is not updated since it's used as the lookup key)
             profile.FullName = updatedProfile.FullName;
             profile.Gender = updatedProfile.Gender;
             profile.DateOfBirth = updatedProfile.DateOfBirth;
@@ -56,9 +56,10 @@ namespace IAM1.Server.Controllers
             profile.OfficeLocation = updatedProfile.OfficeLocation;
             profile.Department = updatedProfile.Department;
             profile.Position = updatedProfile.Position;
-            profile.Manager = updatedProfile.Manager;
+            profile.ManagerEmail = updatedProfile.ManagerEmail;
             profile.JoinedDate = updatedProfile.JoinedDate;
-            profile.EmploymentStatus = updatedProfile.EmploymentStatus;
+            profile.EmployeeStatus = updatedProfile.EmployeeStatus;
+            profile.EmployeeType = updatedProfile.EmployeeType;
 
             await _context.SaveChangesAsync();
 

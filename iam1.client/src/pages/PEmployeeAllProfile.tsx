@@ -1,25 +1,14 @@
+// PEmployeeAllProfile.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { UserProfile } from './PProfile';
 import './PProfile.css';
 
-// 1. Interface สำหรับโครงสร้างข้อมูลโปรไฟล์
-export interface UserProfile {
-    fullName: string;
+interface PEmployeeAllProfileProps {
     employeeId: string;
-    gender: string;
-    dateOfBirth: string;
-    email: string;
-    phone: string;
-    officeLocation: string;
-    department: string;
-    position: string;
-    managerEmail: string;
-    joinedDate: string;
-    employeeStatus: string;
-    employeeType: string;
+    onBack?: () => void; // return to table all employee
 }
 
-// แปลง ISO date string จาก backend ("1992-05-14T00:00:00") ให้เป็นรูปแบบอ่านง่าย ("14 May 1992")
+// แปลง ISO date string ("1992-05-14T00:00:00") ให้เป็นรูปแบบอ่านง่าย ("14 May 1992")
 const formatDate = (dateString?: string | null) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -27,46 +16,48 @@ const formatDate = (dateString?: string | null) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
-export function PProfile() {
-    const navigate = useNavigate();
+// คำนวณอักษรย่อสำหรับ Avatar
+const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+};
 
+const initialProfileState: UserProfile = {
+    fullName: '',
+    employeeId: '',
+    gender: '',
+    dateOfBirth: '',
+    email: '',
+    phone: '',
+    officeLocation: '',
+    department: '',
+    position: '',
+    managerEmail: '',
+    joinedDate: '',
+    employeeStatus: '',
+    employeeType: ''
+};
+
+export function PEmployeeAllProfile({ employeeId, onBack }: PEmployeeAllProfileProps) {
     const [activeTab, setActiveTab] = useState<'profile' | 'role'>('profile');
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // อ่านค่า employeeId จาก sessionStorage ตั้งแต่ตอน render ครั้งแรกเลย (lazy initializer)
-    // แทนที่จะ setState ซ้อนใน useEffect ซึ่งทำให้เกิด cascading render warning
-    const [employeeId] = useState<string | null>(() => sessionStorage.getItem('iam1_employeeId'));
-
     // Master state ข้อมูลหลักที่ดึงมาจาก Backend
-    const [profileData, setProfileData] = useState<UserProfile>({
-        fullName: '',
-        employeeId: '',
-        gender: '',
-        dateOfBirth: '',
-        email: '',
-        phone: '',
-        officeLocation: '',
-        department: '',
-        position: '',
-        managerEmail: '',
-        joinedDate: '',
-        employeeStatus: '',
-        employeeType: ''
-    });
+    const [profileData, setProfileData] = useState<UserProfile>(initialProfileState);
 
     // Temporary state สำหรับการแก้ไขข้อมูล (ไม่กระทบข้อมูลจริงจนกว่าจะกด Save)
-    const [editForm, setEditForm] = useState<UserProfile>(profileData);
+    const [editForm, setEditForm] = useState<UserProfile>(initialProfileState);
 
-    // 2. ใช้ employeeId ที่เก็บไว้ตอน login ค้นหาข้อมูล Profile จาก API
+    // Fetch ข้อมูลพนักงานตาม employeeId ที่ส่งผ่าน Props
     useEffect(() => {
-        if (!employeeId) {
-            // ไม่มี employeeId (เข้าหน้านี้ตรงๆ โดยไม่ login) -> เด้งกลับหน้า login
-            navigate('/');
-            return;
-        }
+        if (!employeeId) return;
 
         const controller = new AbortController();
 
@@ -84,15 +75,14 @@ export function PProfile() {
                     setProfileData(data);
                     setEditForm(data);
                 } else if (response.status === 404) {
-                    setFetchError(`ไม่พบข้อมูลพนักงาน Employee ID: ${employeeId}`);
+                    setFetchError(`Fail to find Employee ID: ${employeeId}`);
                 } else {
-                    console.error('Failed to fetch profile. Status:', response.status);
-                    setFetchError(`ไม่สามารถโหลดข้อมูลได้ (สถานะ ${response.status})`);
+                    setFetchError(`Fail to load (status ${response.status})`);
                 }
             } catch (error) {
                 if ((error as Error).name !== 'AbortError') {
                     console.error('Error fetching profile:', error);
-                    setFetchError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                    setFetchError('Fail to connect to server');
                 }
             } finally {
                 setIsLoading(false);
@@ -102,17 +92,7 @@ export function PProfile() {
         fetchProfile();
 
         return () => controller.abort();
-    }, [employeeId, navigate]);
-
-    // คำนวณอักษรย่อสำหรับ Avatar (เช่น "Dracule Mihawk" -> "DM")
-    const getInitials = (name: string) => {
-        if (!name) return 'U';
-        const parts = name.trim().split(' ');
-        if (parts.length >= 2) {
-            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
-    };
+    }, [employeeId]);
 
     // จัดการอัปเดตฟิลด์ในโหมดแก้ไข
     const handleInputChange = (field: keyof UserProfile, value: string) => {
@@ -131,13 +111,7 @@ export function PProfile() {
         setIsEditing(false);
     };
 
-    // ออกจากระบบ -> เคลียร์ employeeId แล้วกลับไปหน้า login
-    const handleSignOut = () => {
-        sessionStorage.removeItem('iam1_employeeId');
-        navigate('/');
-    };
-
-    // 3. ยิง API บันทึกข้อมูล
+    // ยิง API บันทึกข้อมูล
     const handleSave = async () => {
         if (!employeeId) return;
 
@@ -178,13 +152,28 @@ export function PProfile() {
         return (
             <div className="container" style={{ padding: '3rem', textAlign: 'center' }}>
                 <p style={{ color: '#DC2626', marginBottom: '16px' }}>{fetchError}</p>
-                <button className="secondary-btn" onClick={handleSignOut}>กลับไปหน้า Login</button>
+                {onBack && (
+                    <button className="secondary-btn" onClick={onBack}>
+                        ← Back to All Employees
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
         <div className="container">
+            {/* ปุ่มกดย้อนกลับไปตารางรายชื่อพนักงาน */}
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    style={{ marginBottom: '16px', cursor: 'pointer', padding: '8px 16px' }}
+                    className="secondary-btn"
+                >
+                    ← Back to All Employees
+                </button>
+            )}
+
             {/* Header Banner & Profile Card */}
             <div className="header-card">
                 <div className="header-banner"></div>
@@ -209,6 +198,7 @@ export function PProfile() {
                             isEditing ? (
                                 <div className="header-actions-group">
                                     <button
+                                        type="button"
                                         className="cancel-btn"
                                         onClick={handleCancel}
                                         disabled={isSaving}
@@ -216,6 +206,7 @@ export function PProfile() {
                                         Cancel
                                     </button>
                                     <button
+                                        type="button"
                                         className="primary-btn"
                                         onClick={handleSave}
                                         disabled={isSaving}
@@ -224,7 +215,7 @@ export function PProfile() {
                                     </button>
                                 </div>
                             ) : (
-                                <button className="secondary-btn" onClick={handleStartEdit}>
+                                <button type="button" className="secondary-btn" onClick={handleStartEdit}>
                                     Edit Profile
                                 </button>
                             )
@@ -436,7 +427,7 @@ export function PProfile() {
                                                 onChange={(e) => handleInputChange('employeeStatus', e.target.value)}
                                             />
                                         ) : (
-                                                <span className="value">{profileData.employeeStatus}</span>
+                                            <span className="value">{profileData.employeeStatus}</span>
                                         )}
                                     </div>
 
@@ -450,7 +441,7 @@ export function PProfile() {
                                                 onChange={(e) => handleInputChange('employeeType', e.target.value)}
                                             />
                                         ) : (
-                                                <span className="value">{profileData.employeeType}</span>
+                                            <span className="value">{profileData.employeeType}</span>
                                         )}
                                     </div>
                                 </div>
@@ -508,7 +499,6 @@ export function PProfile() {
     );
 }
 
-
 // SVG Icons สำหรับใช้งานใน Tabs และ Sections
 const ProfileIcons = {
     User: (
@@ -540,5 +530,3 @@ const ProfileIcons = {
         </svg>
     )
 };
-
-export default PProfile;

@@ -21,11 +21,11 @@ function App() {
         setError(null);
         
         try {
-            // นำ employeeId ที่กรอกไปค้นหาใน database ผ่าน API
+            // Look up the employeeId in the database via the API
             const response = await fetch(`/api/profile/${encodeURIComponent(trimmedId)}`);
 
             if (response.ok) {
-                // เก็บ employeeId ไว้ใช้ตอนโหลดหน้า Profile
+                // Store employeeId so the Profile page can load this specific employee's data later
                 sessionStorage.setItem('iam1_employeeId', trimmedId);
                 navigate('/overview');
             } else if (response.status === 404) {
@@ -50,7 +50,7 @@ function App() {
             loginWithEmployeeId(employeeId);
         }
     };
-    // SSO Login: ยังไม่ต่อระบบ SSO จริง จึงล็อกอินด้วย employeeId = "administrator" เสมอ
+    // SSO Login: not wired to a real SSO provider yet, always logs in as "administrator"
     const handleSsoLogin = () => {
         loginWithEmployeeId('administrator');
     };
@@ -73,7 +73,7 @@ function App() {
                         />
                     </div>
 
-                    {/* Password (ยังไม่ใช้งานตอนนี้) */}
+                    {/* Password  (not used yet) */}
                     <div className="login-form-group">
                         <label className="login-label">Password</label>
                         <input type="password" placeholder="********" className="login-input" />
@@ -100,7 +100,7 @@ function App() {
                     <div className="login-divider-line"></div>
                 </div>
 
-                {/* SSO Login Button (ยังไม่ทำงานจริง) */}
+                {/* SSO Login Button: always logs in with employeeId = "administrator" */}
                 <button type="button" className="login-sso-button" onClick={handleSsoLogin} disabled={isLoading}>
                     {isLoading ? 'Loading...' : 'SSO Login'}
                 </button>

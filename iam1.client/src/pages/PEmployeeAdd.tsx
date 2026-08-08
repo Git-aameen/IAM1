@@ -1,5 +1,5 @@
 
-export function PEmployee_add() {
+export function PEmployeeAdd() {
 
     return (
         <div>
@@ -8,4 +8,4 @@ export function PEmployee_add() {
     );
 }
 
-export default PEmployee_add;
+export default PEmployeeAdd;
