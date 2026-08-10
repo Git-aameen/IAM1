@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IAM1.Server.Data
 {
-    // ต้องสืบทอด (inherit) มาจาก DbContext เสมอ
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -13,29 +12,25 @@ namespace IAM1.Server.Data
 
         public DbSet<UserProfiles> UserProfiles { get; set; }
 
+        public DbSet<UserLogin> UserLogin { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Seed Data 
-            modelBuilder.Entity<UserProfiles>().HasData(new UserProfiles
-            {
-                Id = 1,
-                FullName = "Dracule Mihawk",
-                EmployeeId = "EMP-2024-0089",
-                Gender = "Male",
-                DateOfBirth = new DateTime(1992, 5, 14),
-                Email = "johnathan.s@company.com",
-                Phone = "+66 81 234 5678",
-                OfficeLocation = "Headquarter, Floor 12, Tech Tower",
-                Department = "Information Technology",
-                Position = "Senior System Administrator",
-                ManagerID = "Sarah Jenkins (IT Director)",
-                ManagerEmail = "Sarah.Jenkins@company.com",
-                JoinedDate = new DateTime(2021, 1, 15),
-                EmployeeStatus = "Active",
-                EmployeeType = "Permanent"
-            });
+            modelBuilder.Entity<UserLogin>()
+                .HasIndex(x => x.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<UserLogin>()
+                .HasIndex(x => x.UserProfileId)
+                .IsUnique();
+
+            modelBuilder.Entity<UserLogin>()
+                .HasOne(x => x.UserProfile)
+                .WithOne()
+                .HasForeignKey<UserLogin>(x => x.UserProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

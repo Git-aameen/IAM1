@@ -6,30 +6,56 @@ function App() {
     const navigate = useNavigate();
 
     const [employeeId, setEmployeeId] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const loginWithEmployeeId = async (id: string) => {
-
+    const loginWithEmployeeId = async (id: string, password: string) => {
         const trimmedId = id.trim();
+
         if (!trimmedId) {
             setError('Please input Employee ID');
             return;
         }
 
+        if (!password) {
+            setError('Please input Password');
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
-        
+
         try {
-            // Look up the employeeId in the database via the API
-            const response = await fetch(`/api/profile/${encodeURIComponent(trimmedId)}`);
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    employeeId: trimmedId,
+                    password: password,
+                }),
+            });
 
             if (response.ok) {
-                // Store employeeId so the Profile page can load this specific employee's data later
-                sessionStorage.setItem('iam1_employeeId', trimmedId);
+                const data = await response.json();
+
+                sessionStorage.setItem(
+                    'iam1_employeeId',
+                    data.employeeId
+                );
+
+                sessionStorage.setItem(
+                    'iam1_userProfileId',
+                    data.userProfileId.toString()
+                );
+
                 navigate('/overview');
+            } else if (response.status === 401) {
+                setError('Invalid Employee ID or Password');
             } else if (response.status === 404) {
-                setError('Can not find EmployeeID');
+                setError('User profile not found');
             } else {
                 setError(`Failed (status: ${response.status})`);
             }
@@ -47,12 +73,12 @@ function App() {
             setError('not allow to login by administrator on this module');
             return;
         } else {
-            loginWithEmployeeId(employeeId);
+            loginWithEmployeeId(employeeId, password);
         }
     };
     // SSO Login: not wired to a real SSO provider yet, always logs in as "administrator"
     const handleSsoLogin = () => {
-        loginWithEmployeeId('administrator');
+        loginWithEmployeeId('administrator', 'administrator');
     };
 
     return (
@@ -76,7 +102,13 @@ function App() {
                     {/* Password  (not used yet) */}
                     <div className="login-form-group">
                         <label className="login-label">Password</label>
-                        <input type="password" placeholder="********" className="login-input" />
+                        <input
+                            type="password"
+                            placeholder="********"
+                            className="login-input"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
 
                     {/* Forget Password */}
