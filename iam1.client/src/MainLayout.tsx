@@ -270,8 +270,20 @@ export function MainLayout() {
                             </div>
                             {isTrainingOpen && (
                                 <ul style={styles.subMenuContainer}>
-                                    <li style={styles.subMenuItem} className="sub-menu-item-hover">All Training</li>
-                                    <li style={styles.subMenuItem} className="sub-menu-item-hover">Add New Training</li>
+                                    <li
+                                        style={getDarkMenuStyle('/training/all')}
+                                        onClick={() => navigate('/training/all')}
+                                        className="sub-menu-item-hover"
+                                    >
+                                        All Training
+                                    </li>
+                                    <li
+                                        style={getDarkMenuStyle('/training/add')}
+                                        onClick={() => navigate('/training/add')}
+                                        className="sub-menu-item-hover"
+                                    >
+                                        Add New Training
+                                    </li>
                                 </ul>
                             )}
                         </li>

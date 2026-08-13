@@ -14,6 +14,14 @@ import PCredential from './pages/PCredential';
 import PEmployeeAll from './pages/PEmployeeAll';
 import PEmployeeAdd from './pages/PEmployeeAdd';
 
+// import page employee
+import PRoleAll from './pages/PRoleAll';
+import PRoleAdd from './pages/PRoleAdd';
+
+// import page training
+import PTrainingAll from './pages/PTrainingAll';
+import PTrainingAdd from './pages/PTrainingAdd';
+
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
@@ -34,12 +42,12 @@ if (rootElement) {
                     <Route path="/employee/all" element={<PEmployeeAll/>} />
                     <Route path="/employee/add" element={<PEmployeeAdd />} />
 
-                    <Route path="/role/all" element={<h2>All Role Page</h2>} />
-                    <Route path="/role/add" element={<h2>Add New Role Page</h2>} />
+                    <Route path="/role/all" element={<PRoleAll />} />
+                    <Route path="/role/add" element={<PRoleAdd />} />
                     <Route path="/asset/all" element={<h2>All Asset Page</h2>} />
                     <Route path="/asset/add" element={<h2>Add New Asset Page</h2>} />
-                    <Route path="/training/all" element={<h2>All Training Page</h2>} />
-                    <Route path="/training/add" element={<h2>Add New Training Page</h2>} />
+                    <Route path="/training/all" element={<PTrainingAll />} />
+                    <Route path="/training/add" element={<PTrainingAdd />} />
                 </Route>
             </Routes>
         </BrowserRouter>

@@ -1,0 +1,310 @@
+/* =========================================================
+   ROLE CONTAINER
+========================================================= */
+
+.role-container {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.role-header {
+    width: 100%;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    padding: 22px 28px;
+    box-sizing: border-box;
+    background: linear-gradient( 135deg, #003787, #075bb8 );
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    margin-bottom: 46px;
+}
+
+
+/* =========================================================
+   HEADER ICON
+========================================================= */
+
+.role-header-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 11px;
+    font-size: 30px;
+    margin-right: 18px;
+}
+
+
+/* =========================================================
+   HEADER CONTENT
+========================================================= */
+
+.role-header-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+
+
+    .role-header-content h2 {
+        margin: 0 0 3px 0;
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+
+    .role-header-content p {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+
+/* =========================================================
+   ROLE COUNT
+========================================================= */
+
+.role-count {
+    min-width: 120px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 18px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-radius: 24px;
+    color: #164b8f;
+    margin-left: 20px;
+}
+
+
+.count-number {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+.count-label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.role-content {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.role-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dfe5ed;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.role-modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 15px;
+    color: #0b2d52;
+}
+
+
+    /* =========================================================
+   TABLE HEADER
+========================================================= */
+
+    .role-modern-table thead {
+        background: #f3f6fa;
+    }
+
+
+    .role-modern-table th {
+        height: 50px;
+        padding: 0 28px;
+        text-align: left;
+        font-weight: 700;
+        color: #16385d;
+        border-bottom: 1px solid #dfe5ed;
+        white-space: nowrap;
+    }
+
+
+    /* =========================================================
+   TABLE BODY
+========================================================= */
+
+    .role-modern-table td {
+        height: 62px;
+        padding: 0 28px;
+        border-bottom: 1px solid #e5e9ef;
+        vertical-align: middle;
+    }
+
+
+    .role-modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+
+    .role-modern-table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+
+        .role-modern-table tbody tr:hover {
+            background-color: #f8fbff;
+        }
+
+
+/* =========================================================
+   COLUMN - NO
+========================================================= */
+
+.role-col-no {
+    width: 70px;
+    text-align: center !important;
+    color: #7890aa;
+}
+
+
+/* =========================================================
+   ROLE NAME
+========================================================= */
+
+.role-name-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #075bb8;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+}
+
+
+    .role-name-link:hover {
+        text-decoration: underline;
+        color: #06498f;
+    }
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.role-description {
+    color: #48627d;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   EMPTY / STATE
+========================================================= */
+
+.role-state {
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #70849a;
+    font-size: 15px;
+}
+
+
+.empty-icon {
+    font-size: 30px;
+    opacity: 0.7;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .role-header {
+        padding: 20px;
+    }
+
+    .role-header-content h2 {
+        font-size: 22px;
+    }
+
+    .role-header-content p {
+        font-size: 14px;
+    }
+
+    .role-count {
+        min-width: 105px;
+        padding: 0 14px;
+    }
+
+    .role-modern-table th,
+    .role-modern-table td {
+        padding: 0 18px;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .role-header {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .role-header-icon {
+        margin-right: 0;
+    }
+
+    .role-header-content {
+        min-width: calc(100% - 80px);
+    }
+
+    .role-count {
+        margin-left: auto;
+    }
+
+    .role-modern-table {
+        min-width: 650px;
+    }
+}
