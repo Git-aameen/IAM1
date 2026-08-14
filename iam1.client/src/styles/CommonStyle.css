@@ -1,0 +1,65 @@
+﻿.page-header {
+    height: 100px;
+    width: 100%;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    padding: 22px 28px;
+    box-sizing: border-box;
+    background: linear-gradient( 135deg, #003787, #075bb8 );
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+.page-header-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,.14);
+    border-radius: 12px;
+    font-size: 28px;
+    margin-right: 18px;
+}
+
+.page-header-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+
+    .page-header-content h2 {
+        margin: 0 0 3px 0;
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .page-header-content p {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.page-count {
+    min-width: 120px;
+    height: 42px;
+    background: white;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #164b8f;
+}

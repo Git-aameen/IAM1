@@ -1,3 +1,6 @@
+import { PageHeaderComponent } from '../components/Common/PageHeaderComponent';
+import { MessageModalComponent } from '../components/Common/MessageModalComponent';
+
 import { useState } from 'react';
 import './PCredential.css';
 
@@ -10,11 +13,11 @@ export function PCredential() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleChangePassword = async (
-        e: React.FormEvent
-    ) => {
-        e.preventDefault();
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    const handleChangePassword = async (e: React.FormEvent) =>
+    {
+        e.preventDefault();
         setMessage('');
         setError('');
 
@@ -31,21 +34,17 @@ export function PCredential() {
         setIsLoading(true);
 
         try {
-            const employeeId =
-                sessionStorage.getItem('iam1_employeeId');
+            const employeeId = sessionStorage.getItem('iam1_employeeId');
 
             if (!employeeId) {
                 setError('User session not found');
                 return;
             }
 
-            const response = await fetch(
-                '/api/auth/change-password',
+            const response = await fetch('/api/auth/change-password',
                 {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: {'Content-Type': 'application/json',},
                     body: JSON.stringify({
                         employeeId,
                         currentPassword,
@@ -58,22 +57,17 @@ export function PCredential() {
             const data = await response.json();
 
             if (response.ok) {
-                setMessage(data.message);
-
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
+
+                setMessage(data.message || 'Password changed successfully');
+                setShowSuccessModal(true);
             } else {
-                setError(
-                    data.message || 'Failed to change password'
-                );
+                setError(data.message || 'Failed to change password');
             }
         } catch (err) {
-            console.error(
-                'Change password error:',
-                err
-            );
-
+            console.error('Change password error:', err);
             setError('Fail to connect server');
         } finally {
             setIsLoading(false);
@@ -82,19 +76,14 @@ export function PCredential() {
 
     return (
         <div className="credential-card">
-            <div className="credential-card-header">
-                <div className="credential-card-icon">
-                    🔑
-                </div>
-                <div>
-                    <h3 className="credential-card-title">
-                        Change Password
-                    </h3>
-                    <p className="credential-card-description">
-                        Update your password to keep your account secure.
-                    </p>
-                </div>
-            </div>
+            <PageHeaderComponent
+                icon="🔑"
+                title="Change Password"
+                subtitle="Update your password to keep your account secure."
+                count={1}
+                countLabel="Credential"
+            />
+
             <div>
                 <label className="credential-label">
                     <br></br>
@@ -159,38 +148,34 @@ export function PCredential() {
                     </p>
                 )}
 
-                {message && (
-                    <p className="credential-success">
-                        {message}
-                    </p>
-                )}
-
                 <div className="credential-actions">
-                    <button
-                        type="button"
-                        className="credential-cancel-btn"
+                    <button type="button" className="credential-cancel-btn"
                         onClick={() => {
                             setCurrentPassword('');
                             setNewPassword('');
                             setConfirmPassword('');
                             setError('');
                             setMessage('');
-                        }}
-                    >
+                        }}>
                         Clear
                     </button>
 
-                    <button
-                        type="submit"
-                        className="credential-primary-btn"
-                        disabled={isLoading}
-                    >
+                    <button type="submit" className="credential-primary-btn" disabled={isLoading}>
                         {isLoading
                             ? 'Changing...'
                             : 'Change Password'}
                     </button>
                 </div>
             </form>
+
+            <MessageModalComponent
+                open={showSuccessModal}
+                title="Success"
+                message={message}
+                onClose={() =>
+                    setShowSuccessModal(false)
+                }
+            />
         </div>
     );
 }

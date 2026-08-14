@@ -1,0 +1,47 @@
+﻿.ag-theme-iam1 {
+    --ag-font-family: "Segoe UI", sans-serif;
+    --ag-font-size: 14px;
+    --ag-header-height: 55px;
+    --ag-row-height: 55px;
+    --ag-background-color: #ffffff;
+    --ag-header-background-color: #f8fafc;
+    --ag-header-foreground-color: #16385d;
+    --ag-border-color: #e5e7eb;
+    --ag-row-hover-color: #f3f8ff;
+    --ag-selected-row-background-color: #dbeafe;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05), 0 10px 25px rgba(0,0,0,.05);
+}
+
+    .ag-theme-iam1 .ag-header {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .ag-theme-iam1 .ag-header-cell {
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .ag-theme-iam1 .ag-row {
+        transition: all .2s ease;
+    }
+
+        .ag-theme-iam1 .ag-row:hover {
+            transform: scale(1.001);
+        }
+
+    .ag-theme-iam1 .ag-cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .ag-theme-iam1 .ag-paging-panel {
+        height: 60px;
+        background: #fafafa;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .ag-theme-iam1 .ag-root-wrapper {
+        border-radius: 14px;
+    }

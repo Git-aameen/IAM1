@@ -1,3 +1,4 @@
+using IAM1.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,7 @@ namespace IAM1.Server.Controllers
     {
         private readonly IConfiguration _configuration;
 
-        public TrainingAllController(
-            IConfiguration configuration
-        )
-        {
+        public TrainingAllController( IConfiguration configuration) {
             _configuration = configuration;
         }
 
@@ -25,16 +23,13 @@ namespace IAM1.Server.Controllers
         public IActionResult GetTraining()
         {
             var trainings = new List<object>();
-
-            using var connection =
-                new SqliteConnection(
+            using var connection = new SqliteConnection(
                     _configuration.GetConnectionString(
                         "DefaultConnection"
                     )
                 );
 
             connection.Open();
-
             const string sql = @"
                 SELECT
                     TrainingId,
@@ -44,24 +39,12 @@ namespace IAM1.Server.Controllers
                 ORDER BY TrainingName;
             ";
 
-            using var command =
-                new SqliteCommand(sql, connection);
-
-            using var reader =
-                command.ExecuteReader();
-
-            while (reader.Read())
-            {
-                trainings.Add(new
-                {
-                    id = reader.GetInt32(
-                        reader.GetOrdinal("TrainingId")
-                    ),
-
-                    trainingId = reader["TrainingId"]?.ToString(),
-
+            using var command = new SqliteCommand(sql, connection);
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) {
+                trainings.Add(new {
+                    trainingId = reader.GetInt32(reader.GetOrdinal("TrainingId")),
                     trainingName = reader["TrainingName"]?.ToString(),
-
                     description = reader["Description"]?.ToString()
                 });
             }
@@ -75,12 +58,9 @@ namespace IAM1.Server.Controllers
         // =====================================================
 
         [HttpPost]
-        public IActionResult CreateTraining(
-            [FromBody] TrainingRequest request
-        )
+        public IActionResult CreateTraining( [FromBody] Training training)
         {
-            using var connection =
-                new SqliteConnection(
+            using var connection = new SqliteConnection(
                     _configuration.GetConnectionString(
                         "DefaultConnection"
                     )
@@ -89,16 +69,14 @@ namespace IAM1.Server.Controllers
             connection.Open();
 
             const string sql = @"
-                INSERT INTO Training
-                (
+                INSERT INTO Training (
                     TrainingName,
                     Description,
                     IsActive,
                     CreatedDate,
                     CreateBy
                 )
-                VALUES
-                (
+                VALUES (
                     @TrainingName,
                     @Description,
                     1,
@@ -107,36 +85,15 @@ namespace IAM1.Server.Controllers
                 );
             ";
 
-            using var command =
-                new SqliteCommand(sql, connection);
-
-            command.Parameters.AddWithValue(
-                "@TrainingId",
-                request.TrainingId
-            );
-
-            command.Parameters.AddWithValue(
-                "@TrainingName",
-                request.TrainingName
-            );
-
-            command.Parameters.AddWithValue(
-                "@Description",
-                request.Description ?? ""
-            );
-
-            command.Parameters.AddWithValue(
-                "@CreateBy",
-                request.UserName ?? "system"
-            );
-
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue( "@TrainingName", training.TrainingName);
+            command.Parameters.AddWithValue( "@Description", training.Description ?? "");
+            command.Parameters.AddWithValue( "@CreateBy", training.CreateBy ?? "system");
             command.ExecuteNonQuery();
 
-            return Ok(new
-            {
+            return Ok(new {
                 success = true,
-                message =
-                    "Training created successfully."
+                message = "Training created successfully."
             });
         }
 
@@ -146,20 +103,15 @@ namespace IAM1.Server.Controllers
         // =====================================================
 
         [HttpPut("{trainingId}")]
-        public IActionResult UpdateTraining(
-            int trainingId,
-            [FromBody] TrainingRequest request
-        )
+        public IActionResult UpdateTraining( int trainingId, [FromBody] Training request)
         {
-            using var connection =
-                new SqliteConnection(
-                    _configuration.GetConnectionString(
+            using var connection = new SqliteConnection( 
+                _configuration.GetConnectionString(
                         "DefaultConnection"
                     )
                 );
 
             connection.Open();
-
             const string sql = @"
                 UPDATE Training
                 SET
@@ -170,44 +122,22 @@ namespace IAM1.Server.Controllers
                 WHERE TrainingId = @TrainingId
             ";
 
-            using var command =
-                new SqliteCommand(sql, connection);
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue( "@TrainingId", trainingId);
+            command.Parameters.AddWithValue( "@TrainingName", request.TrainingName);
+            command.Parameters.AddWithValue( "@Description", request.Description ?? "");
+            command.Parameters.AddWithValue( "@UpdateBy", request.UpdateBy ?? "system");
 
-            command.Parameters.AddWithValue(
-                "@TrainingId",
-                trainingId
-            );
-
-            command.Parameters.AddWithValue(
-                "@TrainingName",
-                request.TrainingName
-            );
-
-            command.Parameters.AddWithValue(
-                "@Description",
-                request.Description ?? ""
-            );
-
-            command.Parameters.AddWithValue(
-                "@UpdateBy",
-                request.UserName ?? "system"
-            );
-
-            var rows =
-                command.ExecuteNonQuery();
-
-            if (rows == 0)
-            {
-                return NotFound(new
-                {
+            var rows = command.ExecuteNonQuery();
+            if (rows == 0) {
+                return NotFound(new {
                     success = false,
                     message =
                         "Training not found."
                 });
             }
 
-            return Ok(new
-            {
+            return Ok(new {
                 success = true,
                 message =
                     "Training updated successfully."
@@ -220,12 +150,9 @@ namespace IAM1.Server.Controllers
         // =====================================================
 
         [HttpDelete("{trainingId}")]
-        public IActionResult DeleteTraining(
-            int trainingId
-        )
+        public IActionResult DeleteTraining( int trainingId)
         {
-            using var connection =
-                new SqliteConnection(
+            using var connection = new SqliteConnection(
                     _configuration.GetConnectionString(
                         "DefaultConnection"
                     )
@@ -250,24 +177,11 @@ namespace IAM1.Server.Controllers
                 ORDER BY r.RoleName
             ";
 
-            using var checkCommand =
-                new SqliteCommand(
-                    checkSql,
-                    connection
-                );
+            using var checkCommand = new SqliteCommand( checkSql, connection);
+            checkCommand.Parameters.AddWithValue( "@TrainingId", trainingId);
 
-            checkCommand.Parameters.AddWithValue(
-                "@TrainingId",
-                trainingId
-            );
-
-            var assignedRoles =
-                new List<string>();
-
-            using (
-                var reader =
-                    checkCommand.ExecuteReader()
-            )
+            var assignedRoles = new List<string>();
+            using ( var reader = checkCommand.ExecuteReader())
             {
                 while (reader.Read())
                 {
@@ -288,10 +202,7 @@ namespace IAM1.Server.Controllers
                 return BadRequest(new
                 {
                     success = false,
-
-                    message =
-                        "Cannot delete training because it is assigned to roles.",
-
+                    message = "Cannot delete training because it is assigned to roles.",
                     assignedRoles
                 });
             }
@@ -305,49 +216,25 @@ namespace IAM1.Server.Controllers
                 WHERE TrainingId = @TrainingId
             ";
 
-            using var deleteCommand =
-                new SqliteCommand(
-                    deleteSql,
-                    connection
-                );
+            using var deleteCommand = new SqliteCommand( deleteSql, connection);
 
-            deleteCommand.Parameters.AddWithValue(
-                "@TrainingId",
-                trainingId
-            );
+            deleteCommand.Parameters.AddWithValue( "@TrainingId", trainingId);
 
-            var rows =
-                deleteCommand.ExecuteNonQuery();
-
+            var rows = deleteCommand.ExecuteNonQuery();
             if (rows == 0)
             {
                 return NotFound(new
                 {
                     success = false,
-                    message =
-                        "Training not found."
+                    message = "Training not found."
                 });
             }
 
             return Ok(new
             {
                 success = true,
-                message =
-                    "Training deleted successfully."
+                message = "Training deleted successfully."
             });
         }
-    }
-
-
-    // =========================================================
-    // REQUEST MODEL
-    // =========================================================
-
-    public class TrainingRequest
-    {
-        public string TrainingId { get; set; } = ""; 
-        public string TrainingName { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? UserName { get; set; }
     }
 }
