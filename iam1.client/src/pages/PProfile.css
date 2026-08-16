@@ -311,3 +311,81 @@
     background-color: #F9FAFB;
     border-radius: 6px;
 }
+
+/* ===== Roles & Permissions tab ===== */
+
+.card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.role-tab-state {
+    padding: 30px 10px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13.5px;
+}
+
+.role-tab-state-error {
+    color: #dc2626;
+}
+
+.role-assign-toolbar {
+    display: flex;
+    gap: 10px;
+    margin: 14px 0 18px;
+}
+
+.role-select {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    cursor: pointer;
+}
+
+    .role-select:focus {
+        outline: none;
+        border-color: #0a57c8;
+        box-shadow: 0 0 0 3px rgba(10, 87, 200, .12);
+    }
+
+.role-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.role-set-primary-btn {
+    border: 1.5px solid #0a57c8;
+    background: white;
+    color: #0a57c8;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+    .role-set-primary-btn:hover {
+        background: #eff6ff;
+    }
+
+/* การ์ด role ที่ถูก mark ว่าจะลบ (ยังไม่หายไปจากจอ) */
+.role-card-pending {
+    background: #fef2f2;
+    border-color: #fecaca;
+    opacity: .85;
+}
+
+    .role-card-pending .role-card-title,
+    .role-card-pending .role-card-desc {
+        text-decoration: line-through;
+        color: #b91c1c;
+    }

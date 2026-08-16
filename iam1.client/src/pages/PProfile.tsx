@@ -2,69 +2,86 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PProfile.css';
 
-// 1. Interface สำหรับโครงสร้างข้อมูลโปรไฟล์
-export interface UserProfile {
-    fullName: string;
-    employeeId: string;
-    gender: string;
-    dateOfBirth: string;
-    email: string;
-    phone: string;
-    officeLocation: string;
-    department: string;
-    position: string;
-    managerEmail: string;
-    joinedDate: string;
-    employeeStatus: string;
-    employeeType: string;
+// import components
+import EmployeeHeaderCard from '../components/employee/EmployeeHeaderCard';
+import EmployeeProfileCard from '../components/employee/EmployeeProfileCard';
+import EmployeeRoleCard from '../components/employee/EmployeeRoleCard';
+
+// import models
+import type { UserProfile } from '../models/UserProfile';
+
+interface AssignedRole {
+    id: number;
+    roleName: string;
+    description: string;
+    isPrimary: boolean;
 }
 
-// แปลง ISO date string จาก backend ("1992-05-14T00:00:00") ให้เป็นรูปแบบอ่านง่าย ("14 May 1992")
-const formatDate = (dateString?: string | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+interface AvailableRole {
+    id: number;
+    roleName: string;
+    description: string;
+}
+
+interface PProfileProps {
+    // ถ้าไม่ส่งมา = หน้า "My Profile" ของ user ที่ login อยู่ (อ่านจาก sessionStorage)
+    // ถ้าส่งมา = หน้า "ดูโปรไฟล์ employee คนอื่น" (เช่นกด View จากตาราง All Employee)
+    employeeId?: string;
+
+    // มีเฉพาะตอนเปิดจากหน้า All Employee เพื่อกดย้อนกลับไปตาราง
+    onBack?: () => void;
+}
+
+const initialProfileState: UserProfile = {
+    fullName: '',
+    employeeId: '',
+    gender: '',
+    dateOfBirth: '',
+    email: '',
+    phone: '',
+    officeLocation: '',
+    department: '',
+    position: '',
+    managerEmail: '',
+    joinedDate: '',
+    employeeStatus: '',
+    employeeType: ''
 };
 
-export function PProfile() {
+export function PProfile({ employeeId: employeeIdProp, onBack }: PProfileProps) {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<'profile' | 'role'>('profile');
     const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isSaving, setIsSaving] = useState<boolean>(false);
-    const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // อ่านค่า employeeId จาก sessionStorage ตั้งแต่ตอน render ครั้งแรกเลย (lazy initializer)
-    // แทนที่จะ setState ซ้อนใน useEffect ซึ่งทำให้เกิด cascading render warning
-    const [employeeId] = useState<string | null>(() => sessionStorage.getItem('iam1_employeeId'));
+    // ถ้าไม่มี prop ส่งมา ให้อ่านจาก sessionStorage (หน้า My Profile ของตัวเอง)
+    // ใช้ lazy initializer เพื่อไม่ต้อง setState ซ้อนใน useEffect
+    //const [employeeId] = useState<string | null>(() => employeeIdProp ?? sessionStorage.getItem('iam1_employeeId'));
+    const employeeId = employeeIdProp ?? sessionStorage.getItem('iam1_employeeId');
+    const [profileData, setProfileData] = useState<UserProfile>(initialProfileState);
+    const [editForm, setEditForm] = useState<UserProfile>(initialProfileState);
 
-    // Master state ข้อมูลหลักที่ดึงมาจาก Backend
-    const [profileData, setProfileData] = useState<UserProfile>({
-        fullName: '',
-        employeeId: '',
-        gender: '',
-        dateOfBirth: '',
-        email: '',
-        phone: '',
-        officeLocation: '',
-        department: '',
-        position: '',
-        managerEmail: '',
-        joinedDate: '',
-        employeeStatus: '',
-        employeeType: ''
-    });
+    const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
+    const [profileFetchError, setProfileFetchError] = useState<string | null>(null);
 
-    // Temporary state สำหรับการแก้ไขข้อมูล (ไม่กระทบข้อมูลจริงจนกว่าจะกด Save)
-    const [editForm, setEditForm] = useState<UserProfile>(profileData);
+    // ===== Roles & Permissions tab state =====
+    const [assignedRoles, setAssignedRoles] = useState<AssignedRole[]>([]);
+    const [availableRoles, setAvailableRoles] = useState<AvailableRole[]>([]);
+    const [isRoleLoading, setIsRoleLoading] = useState<boolean>(false);
+    const [isRoleSaving, setIsRoleSaving] = useState<boolean>(false);
+    const [roleFetchError, setRoleFetchError] = useState<string | null>(null);
 
-    // 2. ใช้ employeeId ที่เก็บไว้ตอน login ค้นหาข้อมูล Profile จาก API
+    const [isRoleEditing, setIsRoleEditing] = useState<boolean>(false);
+    const [selectedRoleIdToAdd, setSelectedRoleIdToAdd] = useState<number>(0);
+    const [pendingRemoveRoleIds, setPendingRemoveRoleIds] = useState<Set<number>>(new Set());
+    const [primaryRoleId, setPrimaryRoleId] = useState<number | null>(null);
+
+    // ===== โหลดข้อมูล Personal Profile =====
     useEffect(() => {
         if (!employeeId) {
-            // ไม่มี employeeId (เข้าหน้านี้ตรงๆ โดยไม่ login) -> เด้งกลับหน้า login
-            navigate('/');
+            //setIsProfileLoading(false);
+            //setProfileFetchError('ไม่พบ Employee ID');
             return;
         }
 
@@ -72,101 +89,239 @@ export function PProfile() {
 
         const fetchProfile = async () => {
             try {
-                setIsLoading(true);
-                setFetchError(null);
+                setIsProfileLoading(true);
+                setProfileFetchError(null);
 
-                const response = await fetch(`/api/profile/${encodeURIComponent(employeeId)}`, {
-                    signal: controller.signal
-                });
+                const response = await fetch(
+                    `/api/profile/${encodeURIComponent(employeeId)}`,
+                    { signal: controller.signal }
+                );
 
                 if (response.ok) {
                     const data: UserProfile = await response.json();
                     setProfileData(data);
                     setEditForm(data);
                 } else if (response.status === 404) {
-                    setFetchError(`ไม่พบข้อมูลพนักงาน Employee ID: ${employeeId}`);
+                    setProfileFetchError(`ไม่พบข้อมูล Employee ID: ${employeeId}`);
                 } else {
-                    console.error('Failed to fetch profile. Status:', response.status);
-                    setFetchError(`ไม่สามารถโหลดข้อมูลได้ (สถานะ ${response.status})`);
+                    setProfileFetchError(`โหลดข้อมูลไม่สำเร็จ (status ${response.status})`);
                 }
             } catch (error) {
                 if ((error as Error).name !== 'AbortError') {
                     console.error('Error fetching profile:', error);
-                    setFetchError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                    setProfileFetchError('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
                 }
             } finally {
-                setIsLoading(false);
+                setIsProfileLoading(false);
             }
         };
 
         fetchProfile();
 
         return () => controller.abort();
-    }, [employeeId, navigate]);
+    }, [employeeId]);
 
-    // คำนวณอักษรย่อสำหรับ Avatar (เช่น "Dracule Mihawk" -> "DM")
-    const getInitials = (name: string) => {
-        if (!name) return 'U';
-        const parts = name.trim().split(' ');
-        if (parts.length >= 2) {
-            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
-    };
+    // ===== โหลด Role เมื่อสลับมาแท็บ Role =====
+    useEffect(() => {
+        if (activeTab !== 'role' || !employeeId) return;
 
-    // จัดการอัปเดตฟิลด์ในโหมดแก้ไข
+        const controller = new AbortController();
+
+        const fetchRoles = async () => {
+            try {
+                setIsRoleLoading(true);
+                setRoleFetchError(null);
+
+                const [assignedResponse, availableResponse] = await Promise.all([
+                    fetch(`/api/profile/${encodeURIComponent(employeeId)}/roles`, {
+                        signal: controller.signal
+                    }),
+                    fetch('/api/role_all', { signal: controller.signal })
+                ]);
+
+                if (!assignedResponse.ok) {
+                    throw new Error('Failed to load employee roles');
+                }
+
+                if (!availableResponse.ok) {
+                    throw new Error('Failed to load available roles');
+                }
+
+                const assignedData: AssignedRole[] = await assignedResponse.json();
+                const availableData: AvailableRole[] = await availableResponse.json();
+
+                setAssignedRoles(assignedData);
+                setAvailableRoles(availableData);
+
+                const primary = assignedData.find(r => r.isPrimary);
+                setPrimaryRoleId(primary ? primary.id : null);
+
+                setPendingRemoveRoleIds(new Set());
+                setIsRoleEditing(false);
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    console.error(error);
+                    setRoleFetchError('ไม่สามารถโหลดข้อมูล Role ได้');
+                }
+            } finally {
+                setIsRoleLoading(false);
+            }
+        };
+
+        fetchRoles();
+
+        return () => controller.abort();
+    }, [activeTab, employeeId]);
+
+    // ===== Personal Profile handlers =====
+
     const handleInputChange = (field: keyof UserProfile, value: string) => {
-        setEditForm((prev) => ({ ...prev, [field]: value }));
+        setEditForm(prev => ({ ...prev, [field]: value }));
     };
 
-    // เริ่มต้นแก้ไข
     const handleStartEdit = () => {
-        setEditForm({ ...profileData });
+        setEditForm(profileData);
         setIsEditing(true);
     };
 
-    // ยกเลิกการแก้ไข
     const handleCancel = () => {
-        setEditForm({ ...profileData });
+        setEditForm(profileData);
         setIsEditing(false);
     };
 
-    // ออกจากระบบ -> เคลียร์ employeeId แล้วกลับไปหน้า login
-    const handleSignOut = () => {
-        sessionStorage.removeItem('iam1_employeeId');
-        navigate('/');
-    };
-
-    // 3. ยิง API บันทึกข้อมูล
     const handleSave = async () => {
         if (!employeeId) return;
 
         try {
             setIsSaving(true);
-            const response = await fetch(`/api/profile/${encodeURIComponent(employeeId)}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(editForm),
-            });
 
-            if (response.ok) {
-                setProfileData(editForm);
-                setIsEditing(false);
-                alert('บันทึกข้อมูลเรียบร้อยแล้ว');
-            } else {
-                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
+            const response = await fetch(
+                `/api/profile/${encodeURIComponent(employeeId)}`,
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editForm)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error();
             }
+
+            setProfileData(editForm);
+            setIsEditing(false);
+            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
         } catch (error) {
-            console.error('Error updating profile:', error);
-            alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+            console.error(error);
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (isLoading) {
+    // ===== Roles & Permissions handlers =====
+
+    const handleToggleRemoveRole = (roleId: number) => {
+        setPendingRemoveRoleIds(prev => {
+            const next = new Set(prev);
+            if (next.has(roleId)) {
+                next.delete(roleId);
+            } else {
+                next.add(roleId);
+            }
+            return next;
+        });
+    };
+
+    const handleAddRole = () => {
+        if (selectedRoleIdToAdd === 0) return;
+
+        const role = availableRoles.find(r => r.id === selectedRoleIdToAdd);
+        if (!role) return;
+
+        const alreadyAssigned = assignedRoles.some(r => r.id === role.id);
+
+        if (alreadyAssigned) {
+            if (pendingRemoveRoleIds.has(role.id)) {
+                handleToggleRemoveRole(role.id);
+            }
+            setSelectedRoleIdToAdd(0);
+            return;
+        }
+
+        setAssignedRoles([
+            ...assignedRoles,
+            { id: role.id, roleName: role.roleName, description: role.description, isPrimary: false }
+        ]);
+
+        setSelectedRoleIdToAdd(0);
+    };
+
+    const handleSetPrimary = (roleId: number) => {
+        setPrimaryRoleId(roleId);
+    };
+
+    const handleCancelRoleEdit = () => {
+        setPendingRemoveRoleIds(new Set());
+
+        const primary = assignedRoles.find(r => r.isPrimary);
+        setPrimaryRoleId(primary ? primary.id : null);
+
+        setSelectedRoleIdToAdd(0);
+        setIsRoleEditing(false);
+    };
+
+    const handleSaveRoles = async () => {
+        if (!employeeId) return;
+
+        const finalRoles = assignedRoles.filter(r => !pendingRemoveRoleIds.has(r.id));
+        const finalRoleIds = finalRoles.map(r => r.id);
+
+        const finalPrimaryId =
+            primaryRoleId !== null && finalRoleIds.includes(primaryRoleId)
+                ? primaryRoleId
+                : null;
+
+        try {
+            setIsRoleSaving(true);
+
+            const response = await fetch(
+                `/api/profile/${encodeURIComponent(employeeId)}/roles`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        roleIds: finalRoleIds,
+                        primaryRoleId: finalPrimaryId
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Save failed');
+            }
+
+            setAssignedRoles(
+                finalRoles.map(r => ({ ...r, isPrimary: r.id === finalPrimaryId }))
+            );
+
+            setPendingRemoveRoleIds(new Set());
+            setIsRoleEditing(false);
+        } catch (error) {
+            console.error(error);
+            alert('ไม่สามารถบันทึก Role ได้');
+        } finally {
+            setIsRoleSaving(false);
+        }
+    };
+
+    // ===== Sign out เฉพาะกรณีเป็นหน้า My Profile (ไม่มี onBack ส่งมา) =====
+    const handleSignOut = () => {
+        sessionStorage.removeItem('iam1_employeeId');
+        navigate('/');
+    };
+
+    if (isProfileLoading) {
         return (
             <div className="container" style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
                 <p>กำลังโหลดข้อมูลโปรไฟล์...</p>
@@ -174,68 +329,66 @@ export function PProfile() {
         );
     }
 
-    if (fetchError) {
+    if (profileFetchError) {
         return (
             <div className="container" style={{ padding: '3rem', textAlign: 'center' }}>
-                <p style={{ color: '#DC2626', marginBottom: '16px' }}>{fetchError}</p>
-                <button className="secondary-btn" onClick={handleSignOut}>กลับไปหน้า Login</button>
+                <p style={{ color: '#DC2626', marginBottom: '16px' }}>{profileFetchError}</p>
+
+                {onBack ? (
+                    <button className="secondary-btn" onClick={onBack}>
+                        ← Back to All Employees
+                    </button>
+                ) : (
+                    <button className="secondary-btn" onClick={handleSignOut}>
+                        กลับไปหน้า Login
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
         <div className="container">
-            {/* Header Banner & Profile Card */}
-            <div className="header-card">
-                <div className="header-banner"></div>
-                <div className="header-content">
-                    <div className="avatar-wrapper">
-                        <div className="avatar">
-                            <span>{getInitials(profileData.fullName)}</span>
-                        </div>
-                    </div>
-                    <div className="user-main-info">
-                        <div className="name-row">
-                            <h2 className="user-name">{profileData.fullName || 'Unassigned Name'}</h2>
-                            <span className="status-badge">Active</span>
-                        </div>
-                        <p className="user-role-text">
-                            {profileData.position || 'No Position'} • {profileData.department || 'No Department'}
-                        </p>
-                    </div>
-                    <div className="header-actions">
-                        {/* แสดงปุ่ม Edit/Save/Cancel เฉพาะหน้า Personal Profile Tab */}
-                        {activeTab === 'profile' && (
-                            isEditing ? (
-                                <div className="header-actions-group">
-                                    <button
-                                        className="cancel-btn"
-                                        onClick={handleCancel}
-                                        disabled={isSaving}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className="primary-btn"
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                    >
-                                        {isSaving ? 'Saving...' : 'Save Profile'}
-                                    </button>
-                                </div>
-                            ) : (
-                                <button className="secondary-btn" onClick={handleStartEdit}>
-                                    Edit Profile
-                                </button>
-                            )
-                        )}
-                    </div>
-                </div>
-            </div>
 
-            {/* Main Body Section: Left Sub-menu + Right Content Area */}
+            <EmployeeHeaderCard profile={profileData} onBack={onBack}>
+
+                {activeTab === 'profile' && (
+                    isEditing ? (
+                        <div className="header-actions-group">
+                            <button className="cancel-btn" onClick={handleCancel} disabled={isSaving}>
+                                Cancel
+                            </button>
+                            <button className="primary-btn" onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Profile'}
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="secondary-btn" onClick={handleStartEdit}>
+                            Edit Profile
+                        </button>
+                    )
+                )}
+
+                {activeTab === 'role' && !isRoleLoading && !roleFetchError && (
+                    isRoleEditing ? (
+                        <div className="header-actions-group">
+                            <button className="cancel-btn" onClick={handleCancelRoleEdit} disabled={isRoleSaving}>
+                                Cancel
+                            </button>
+                            <button className="primary-btn" onClick={handleSaveRoles} disabled={isRoleSaving}>
+                                {isRoleSaving ? 'Saving...' : 'Save Roles'}
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="secondary-btn" onClick={() => setIsRoleEditing(true)}>
+                            Edit Roles
+                        </button>
+                    )
+                )}
+
+            </EmployeeHeaderCard>
+
             <div className="main-layout">
-                {/* Left Sub-sidebar Tabs */}
                 <div className="sub-sidebar">
                     <button
                         type="button"
@@ -256,251 +409,30 @@ export function PProfile() {
                     </button>
                 </div>
 
-                {/* Right Content Area */}
                 <div className="content-area">
                     {activeTab === 'profile' ? (
-                        /* TAB 1: Personal Profile Information */
-                        <div className="grid-two-columns">
-                            {/* Personal Details Card */}
-                            <div className="card">
-                                <h3 className="card-title">Personal Information</h3>
-                                <div className="info-list">
-                                    <div className="info-item">
-                                        <span className="label">Full Name</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.fullName}
-                                                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.fullName}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Employee ID</span>
-                                        <span className="value">{profileData.employeeId}</span>
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Gender</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.gender}
-                                                onChange={(e) => handleInputChange('gender', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.gender}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Date of Birth</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.dateOfBirth}
-                                                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{formatDate(profileData.dateOfBirth)}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Contact Details Card */}
-                            <div className="card">
-                                <h3 className="card-title">Contact Information</h3>
-                                <div className="info-list">
-                                    <div className="info-item">
-                                        <span className="label">Email Address</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="email"
-                                                value={editForm.email}
-                                                onChange={(e) => handleInputChange('email', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value value-with-icon">
-                                                {ProfileIcons.Mail} {profileData.email}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Phone Number</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.phone}
-                                                onChange={(e) => handleInputChange('phone', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value value-with-icon">
-                                                {ProfileIcons.Phone} {profileData.phone}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Office Location</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.officeLocation}
-                                                onChange={(e) => handleInputChange('officeLocation', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.officeLocation}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Employment Details Card */}
-                            <div className="card card-span-two">
-                                <h3 className="card-title">Employment Details</h3>
-                                <div className="grid-three-columns">
-                                    <div className="info-item">
-                                        <span className="label">Department</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.department}
-                                                onChange={(e) => handleInputChange('department', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.department}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Position / Title</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.position}
-                                                onChange={(e) => handleInputChange('position', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.position}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Manager / Supervisor</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.managerEmail}
-                                                onChange={(e) => handleInputChange('managerEmail', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{profileData.managerEmail}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Joined Date</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.joinedDate}
-                                                onChange={(e) => handleInputChange('joinedDate', e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className="value">{formatDate(profileData.joinedDate)}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Employee Status</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.employeeStatus}
-                                                onChange={(e) => handleInputChange('employeeStatus', e.target.value)}
-                                            />
-                                        ) : (
-                                                <span className="value">{profileData.employeeStatus}</span>
-                                        )}
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="label">Employee Type</span>
-                                        {isEditing ? (
-                                            <input
-                                                className="text-input"
-                                                type="text"
-                                                value={editForm.employeeType}
-                                                onChange={(e) => handleInputChange('employeeType', e.target.value)}
-                                            />
-                                        ) : (
-                                                <span className="value">{profileData.employeeType}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <EmployeeProfileCard
+                            profile={profileData}
+                            editForm={editForm}
+                            isEditing={isEditing}
+                            onChange={handleInputChange}
+                        />
                     ) : (
-                        /* TAB 2: Roles & Permissions Information */
-                        <div className="tab-content-stack">
-                            <div className="card">
-                                <h3 className="card-title">Assigned System Roles</h3>
-                                <div className="role-badge-container">
-                                    <div className="role-card">
-                                        <div className="role-card-header">
-                                            <span className="role-card-title">System Administrator</span>
-                                            <span className="primary-badge">Primary</span>
-                                        </div>
-                                        <p className="role-card-desc">Full access to user management, system logs, and security policy settings.</p>
-                                    </div>
-
-                                    <div className="role-card">
-                                        <div className="role-card-header">
-                                            <span className="role-card-title">Asset Manager</span>
-                                        </div>
-                                        <p className="role-card-desc">Read & Write access to IT hardware, licenses, and equipment allocations.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card">
-                                <h3 className="card-title">Access Rights Summary</h3>
-                                <div className="permission-grid">
-                                    <div className="permission-item">
-                                        {ProfileIcons.CheckCircle}
-                                        <span>User Management (Create / Edit / Delete)</span>
-                                    </div>
-                                    <div className="permission-item">
-                                        {ProfileIcons.CheckCircle}
-                                        <span>Role & Access Policy Configuration</span>
-                                    </div>
-                                    <div className="permission-item">
-                                        {ProfileIcons.CheckCircle}
-                                        <span>Asset Management & Inventory Allocation</span>
-                                    </div>
-                                    <div className="permission-item">
-                                        {ProfileIcons.CheckCircle}
-                                        <span>Audit Logs & Security Monitoring Read</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <EmployeeRoleCard
+                            assignedRoles={assignedRoles}
+                            availableRoles={availableRoles}
+                            isLoading={isRoleLoading}
+                            error={roleFetchError}
+                            isEditing={isRoleEditing}
+                            isSaving={isRoleSaving}
+                            selectedRoleIdToAdd={selectedRoleIdToAdd}
+                            primaryRoleId={primaryRoleId}
+                            pendingRemoveRoleIds={pendingRemoveRoleIds}
+                            onRoleSelect={setSelectedRoleIdToAdd}
+                            onAddRole={handleAddRole}
+                            onSetPrimary={handleSetPrimary}
+                            onToggleRemoveRole={handleToggleRemoveRole}
+                        />
                     )}
                 </div>
             </div>
@@ -508,8 +440,6 @@ export function PProfile() {
     );
 }
 
-
-// SVG Icons สำหรับใช้งานใน Tabs และ Sections
 const ProfileIcons = {
     User: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -520,23 +450,6 @@ const ProfileIcons = {
     Shield: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-        </svg>
-    ),
-    Mail: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-            <polyline points="22,6 12,13 2,6"></polyline>
-        </svg>
-    ),
-    Phone: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-        </svg>
-    ),
-    CheckCircle: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
     )
 };

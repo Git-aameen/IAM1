@@ -200,17 +200,13 @@ export function PRoleAllProfile({
                 </button>
 
                 <div>
-
                     <h2>
                         Role Details
                     </h2>
-
                     <p>
                         View role information and assigned training.
                     </p>
-
                 </div>
-
             </div>
 
 

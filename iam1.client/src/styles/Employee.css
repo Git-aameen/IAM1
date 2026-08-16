@@ -1,0 +1,24 @@
+﻿.header-banner {
+
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    padding: 15px 15px;
+}
+
+.header-back-btn {
+    border: none;
+    background: rgba(255, 255, 255, .18);
+    color: white;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .15s ease;
+}
+
+    .header-back-btn:hover {
+        background: rgba(255, 255, 255, .3);
+    }

@@ -12,9 +12,9 @@ export function PageHeaderComponent({
     icon,
     title,
     subtitle,
-    count,
-    countLabel,
     action
+    //count,
+    //countLabel,    
 }: PageHeaderProps) {
     return (
         <div className="page-header">
@@ -30,6 +30,8 @@ export function PageHeaderComponent({
             <div className="page-header-actions">
                 {action}
 
+
+                {/* =====================================================
                 <div className="page-count">
                     <span className="count-number">
                         {count}
@@ -39,6 +41,8 @@ export function PageHeaderComponent({
                         {countLabel}
                     </span>
                 </div>
+                ===================================================== */}
+                
             </div>
         </div>
     );
